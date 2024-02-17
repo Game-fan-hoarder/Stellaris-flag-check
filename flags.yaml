@@ -1,0 +1,106 @@
+initial_flags:
+  legendary_leader:
+    target: "legendary_crash_site"
+    display: "Keides"
+  lgates:
+    one_of:
+      - dessanu:
+          target: "gray_goo_empire"
+          display: "Nanite-Dessanu"
+      - dragon:
+          target: "dragon_season"
+          display: "Nanite-Dragon"
+      - gray:
+          target: ""
+          display: "Nanite-Gray"
+      - crisis:
+          target: "gray_goo_crisis_set"
+          display: "Nanite-Crisis"
+  horizon:
+    target: "horizonsignal_spawn"
+    display: "horizon-signal"
+  # leviathans
+  leviathans:
+    any_of:
+      - dragon:
+          target: "guardians_dragon_system"
+          display: "ether drake"
+      - dreadnough:
+          target: "guardians_dreadnought_system"
+          display: "dreadnought"
+      - fortress:
+          target: "guardians_fortress_system"
+          display: "fortress"
+      - infinity:
+          target: "guardians_technosphere_system"
+          display: "infinity"
+      - wraith:
+          target: "guardians_wraith_system"
+          display: "wraith"
+      - stellar:
+          target: "guardians_stellarite_system"
+          display: "devourer"
+      - tiyanki:
+          target: "elderly_tiyanki_system"
+          display: "matriarch"
+      - voidspawn:
+          target: "guardians_hatchling_system"
+          display: "voidspawn"
+      - scavenger:
+          target: "scavenger_bot_system"
+          display: "scavenger"
+      - dimensional:
+          target: "guardians_horror_system"
+          display: "horror"
+  # fallen empire
+  fallen_empire:
+    any_of:
+      - materialist:
+          target: "fallen_empire_1"
+          display: "materialist"
+      - spiritualist:
+          target: "fallen_empire_2"
+          display: "spiritualist"
+      - xenophile:
+          target: "fallen_empire_3"
+          display: "xenophile"
+      - xenophoble:
+          target: "fallen_empire_4"
+          display: "xenophobe"
+      - machine:
+          target: "fallen_empire_machine"
+          display: "machine"
+  # systems
+  systems:
+    base:
+      any_of:
+        - trappist
+        - odryskia
+        - polaris
+        - parvus
+        - zanaam
+        - santuary
+        - shallash
+        - sol
+        - larionessi
+        - zevox
+        - ancient_manufactory
+        - ultima_vigilis
+        - federation_end
+    distant_star:
+      any_of:
+        - junk_ratlings
+        - sea_of_consciousness
+        - twin_tomb_world
+        - gish
+        - paridayda
+    first_contact:
+      any_of:
+        - ithome
+    utopia:
+      any_of:
+        - starmall
+        - ruined_ringworld
+    ancient_relic:
+      any_of:
+        - care
