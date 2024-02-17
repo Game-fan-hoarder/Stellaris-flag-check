@@ -1,106 +1,123 @@
-initial_flags:
-  legendary_leader:
-    target: "legendary_crash_site"
-    display: "Keides"
-  lgates:
-    one_of:
-      - dessanu:
-          target: "gray_goo_empire"
-          display: "Nanite-Dessanu"
-      - dragon:
-          target: "dragon_season"
-          display: "Nanite-Dragon"
-      - gray:
-          target: ""
-          display: "Nanite-Gray"
-      - crisis:
-          target: "gray_goo_crisis_set"
-          display: "Nanite-Crisis"
-  horizon:
-    target: "horizonsignal_spawn"
-    display: "horizon-signal"
-  # leviathans
-  leviathans:
+legendary_leader:
+  target: "legendary_crash_site"
+  display: "Keides"
+lgates:
+  one_of:
+    - dessanu:
+        target: "gray_goo_empire"
+        display: "Nanite-Dessanu"
+    - dragon:
+        target: "dragon_season"
+        display: "Nanite-Dragon"
+    - gray:
+        target: null
+        display: "Nanite-Gray"
+    - crisis:
+        target: "gray_goo_crisis_set"
+        display: "Nanite-Crisis"
+horizon:
+  target: "horizonsignal_spawn"
+  display: "Horizon-signal"
+# leviathans
+leviathans:
+  any_of:
+    - dragon:
+        target: "guardians_dragon_system"
+        display: "Ether drake"
+    - dreadnough:
+        target: "guardians_dreadnought_system"
+        display: "Dreadnought"
+    - fortress:
+        target: "guardians_fortress_system"
+        display: "Fortress"
+    - infinity:
+        target: "guardians_technosphere_system"
+        display: "Infinity"
+    - wraith:
+        target: "guardians_wraith_system"
+        display: "Wraith"
+    - stellar:
+        target: "guardians_stellarite_system"
+        display: "Devourer"
+    - tiyanki:
+        target: "elderly_tiyanki_system"
+        display: "Matriarch"
+    - voidspawn:
+        target: "guardians_hatchling_system"
+        display: "Voidspawn"
+    - scavenger:
+        target: "scavenger_bot_system"
+        display: "Scavenger"
+    - dimensional:
+        target: "guardians_horror_system"
+        display: "Horror"
+# fallen empire
+fallen_empire:
+  any_of:
+    - materialist:
+        target: "fallen_empire_1"
+        display: "materialist"
+    - spiritualist:
+        target: "fallen_empire_2"
+        display: "spiritualist"
+    - xenophile:
+        target: "fallen_empire_3"
+        display: "xenophile"
+    - xenophoble:
+        target: "fallen_empire_4"
+        display: "xenophobe"
+    - machine:
+        target: "fallen_empire_machine"
+        display: "machine"
+# systems
+systems:
+  base:
     any_of:
-      - dragon:
-          target: "guardians_dragon_system"
-          display: "ether drake"
-      - dreadnough:
-          target: "guardians_dreadnought_system"
-          display: "dreadnought"
-      - fortress:
-          target: "guardians_fortress_system"
-          display: "fortress"
-      - infinity:
-          target: "guardians_technosphere_system"
-          display: "infinity"
-      - wraith:
-          target: "guardians_wraith_system"
-          display: "wraith"
-      - stellar:
-          target: "guardians_stellarite_system"
-          display: "devourer"
-      - tiyanki:
-          target: "elderly_tiyanki_system"
-          display: "matriarch"
-      - voidspawn:
-          target: "guardians_hatchling_system"
-          display: "voidspawn"
-      - scavenger:
-          target: "scavenger_bot_system"
-          display: "scavenger"
-      - dimensional:
-          target: "guardians_horror_system"
-          display: "horror"
-  # fallen empire
-  fallen_empire:
+      - trappist:
+          target: "trappist_initializer"
+          display: "trappist"
+      - odryskia:
+          target: "site_debris_belt"
+          display: "odryskia"
+      - polaris:
+          target: "polaris_civilization"
+          display: "polaris"
+      - parvus:
+          target: "parvus_system"
+          display: "parvus"
+      - zanaam:
+          target: "special_init_06"
+          display: "Zanaam"
+      - sanctuary:
+          target: "sanctuary_system"
+          display: "Sanctuary"
+      - shallash:
+          target: "site_ruins_of_shallash"
+          display: "Shallash"
+      - larionessi:
+          target: "unique_system_initializer_02"
+          display: "Larionessi"
+      - zevox:
+          target: "zevox_digsite"
+          display: "Zevox"
+      - ultima_vigilis:
+          target: "surveillance_supercomputer_system"
+          display: "Ultima Vigilis"
+  distant_star:
     any_of:
-      - materialist:
-          target: "fallen_empire_1"
-          display: "materialist"
-      - spiritualist:
-          target: "fallen_empire_2"
-          display: "spiritualist"
-      - xenophile:
-          target: "fallen_empire_3"
-          display: "xenophile"
-      - xenophoble:
-          target: "fallen_empire_4"
-          display: "xenophobe"
-      - machine:
-          target: "fallen_empire_machine"
-          display: "machine"
-  # systems
-  systems:
-    base:
-      any_of:
-        - trappist
-        - odryskia
-        - polaris
-        - parvus
-        - zanaam
-        - santuary
-        - shallash
-        - sol
-        - larionessi
-        - zevox
-        - ancient_manufactory
-        - ultima_vigilis
-        - federation_end
-    distant_star:
-      any_of:
-        - junk_ratlings
-        - sea_of_consciousness
-        - twin_tomb_world
-        - gish
-        - paridayda
-    first_contact:
-      any_of:
-        - ithome
-    utopia:
-      any_of:
-        - starmall
-        - ruined_ringworld
-    ancient_relic:
-      any_of:
-        - care
+      - junk_ratlings:
+          target: "ratling_1_1"
+          display: "Ratlings"
+      - sea_of_consciousness:
+          target: "living_planet_system"
+          display: "Sea of consciousness"
+  first_contact:
+    any_of:
+      - ithome:
+          target: "the_chosen_gate_initializer"
+          display: "The Chosen"
+  ancient_relic:
+    any_of:
+      - care:
+          target: "planetary_mechanocalibrator"
+          display: "CARE"
