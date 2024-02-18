@@ -54,17 +54,18 @@ def recursivly_parse_flags(flag_amp:Dict, cursor: Cursor, upper_tag: Optional[st
     # TODO: add one_of and any_of flag
     for key, value in flag_amp.items():
         if (key == "one_of") or (key == "any_of"):
+            cursor.execute("""INSERT INTO one_of (tag_id) VALUES (?)""", (upper_tag,))
             # value is a list
             for subkey in value:
                 recursivly_parse_flags(subkey, cursor, upper_tag)
         elif isinstance(value, dict):
             if "target" not in value.keys():
                 # continue parsing
-                cursor.execute("""INSERT INTO tags (tag_id, parent_tag_id, display) VALUES(%s,%s,%s)""", (key, upper_tag, None))
+                cursor.execute("""INSERT INTO tags (tag_id, parent_tag_id, display) VALUES(?,?,?)""", (key, upper_tag, None))
                 recursivly_parse_flags(value, cursor, key)
             else:
                 # final parse
-                cursor.execute("""INSERT INTO tags (tag_id, parent_tag_id, display, target) VALUES(%s,%s,%s,%s)""", (key, upper_tag, value["display"], value["target"]))
+                cursor.execute("""INSERT INTO tags (tag_id, parent_tag_id, display, target) VALUES(?,?,?,?)""", (key, upper_tag, value["display"], value["target"]))
 
 
 def load_flag_map(database_connection: Connection) -> Callable:
@@ -82,42 +83,44 @@ def load_flag_map(database_connection: Connection) -> Callable:
     database_connection.commit()
     cursor.close()
 
-    def build_flags(save_state_content: str) -> Dict:
+    def build_flags(save_state_content: str, save_id:str) -> Dict:
         """
         This is somewhat inefficient, need to check for performance later
         :param save_state_content:
         :return:
         """
         cursor = database_connection.cursor()
-        output_ = {}
-        for color_group in save_state_content:
-            pass
-
+        cursor.execute("SELECT tags.tag_id, tags.target FROM tags WHERE tags.target IS NOT NULL")
+        for tag_id, target in cursor.fetchall():
+            if save_state_content.find(target)>0:
+                # found
+                cursor.execute("""INSERT INTO saves_tags (tag_id, save_id) VALUES (?,?)""", (tag_id, save_id))
         database_connection.commit()
         cursor.close()
-        return output_
 
     return build_flags
 
-def init_database():
+def init_database(database_dir):
     """Create a new database into a temp directory for searching."""
-    tempdir = tempfile.mktemp()
-    # connection = sqlite3.connect(tempdir + "/flags.db")
-    connection = sqlite3.connect("data.db")
+    connection = sqlite3.connect(Path(database_dir).joinpath("flags.db"))
     with open("database/init_script.sql", 'r') as migration_script:
         cursor = connection.cursor()
         cursor.executescript(migration_script.read())
         connection.commit()
         cursor.close()
-    return connection,tempdir
+    return connection
 
-def get_flag_dict():
+def get_flag_dict(dir_to_clean):
     """Get a dictionnary of flag_save pairs."""
-    database_connection, dir_to_clean = init_database()
+    database_connection = init_database(dir_to_clean)
     call_function = load_flag_map(database_connection)
     for nation_save in get_saves_folder():
-        temp_dir = tempfile.mktemp()
-        try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cursor = database_connection.cursor()
+            save_id = nation_save.stem
+            cursor.execute("""INSERT INTO saves (save_id, save_location) VALUES (?,?)""", (save_id, str(nation_save)))
+            database_connection.commit()
+            cursor.close()
             # assuming there may be multiple save, we only take the first one
             with zipfile.ZipFile(list(nation_save.glob("*.sav"))[0], 'r') as save_file:
                 save_file.extractall(temp_dir)
@@ -125,11 +128,10 @@ def get_flag_dict():
             relevant_content = Path(temp_dir).joinpath(GAMESTATE)
             with open(relevant_content, 'r') as gamestate_file:
                 all_content = gamestate_file.read()
-                call_function(all_content)
-        finally:
-            shutil.rmtree(temp_dir)
-            shutil.rmtree(dir_to_clean)
+                call_function(all_content, save_id)
     return database_connection
 
 if __name__ == "__main__":
-    get_flag_dict()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        connection = get_flag_dict(temp_dir)
+        connection.close()

@@ -6,6 +6,11 @@ CREATE TABLE IF NOT EXISTS tags (
     FOREIGN KEY (parent_tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS one_of (
+    tag_id VARCHAR(255) PRIMARY KEY,
+    FOREIGN KEY (tag_id) REFERENCES tags(tag_id)
+);
+
 CREATE TABLE IF NOT EXISTS saves (
     save_id VARCHAR(255) PRIMARY KEY,
     save_location VARCHAR(255) UNIQUE

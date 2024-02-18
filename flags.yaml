@@ -6,7 +6,7 @@ lgates:
     - dessanu:
         target: "gray_goo_empire"
         display: "Nanite-Dessanu"
-    - dragon:
+    - nanite_dragon:
         target: "dragon_season"
         display: "Nanite-Dragon"
     - gray:
@@ -21,7 +21,7 @@ horizon:
 # leviathans
 leviathans:
   any_of:
-    - dragon:
+    - ether_dragon:
         target: "guardians_dragon_system"
         display: "Ether drake"
     - dreadnough:
