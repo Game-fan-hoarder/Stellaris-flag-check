@@ -1,2 +1,3 @@
 pyyaml
 pyside6
+tqdm
