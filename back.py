@@ -1,3 +1,4 @@
+import logging
 import zipfile
 import tempfile
 import shutil
@@ -31,11 +32,26 @@ def get_saves_folder() -> Iterable[Path]:
     # determine the platform
     system = platform.system()
     if system == "Windows":
+        import winreg
+        def read_reg(ep, p=r"", k=''):
+            try:
+                key = winreg.OpenKeyEx(ep, p)
+                value = winreg.QueryValueEx(key, k)
+                if key:
+                    winreg.CloseKey(key)
+                return value[0]
+            except Exception as e:
+                return None
+            return None
+
         # WINDOWS
         base = Path(os.environ.get("USERPROFILE"))  # search base
         target_1 = base.joinpath("Documents/Paradox Interactive/Stellaris/save games")
         target_2 = base.joinpath("Documents/Paradox Interactive/Stellaris Plaza/save games")
-        return combine_multiple_savegames_folder([target_1, target_2])
+
+        steam_path = str(read_reg(ep = winreg.HKEY_LOCAL_MACHINE, p = r"SOFTWARE\Wow6432Node\Valve\Steam", k = 'InstallPath'))
+        targets_3 = [steam_user_path.joinpath("281990/remote/save games") for steam_user_path in Path(steam_path).joinpath("userdata").glob("*")]
+        return combine_multiple_savegames_folder([target_1, target_2, *targets_3])
     if system == "Darwin":
         # MAC
         target = Path(os.environ.get("HOME")).joinpath("Documents/Paradox Interactive/Stellaris/save games")
@@ -157,7 +173,8 @@ def get_flag_dict(dir_to_clean):
                 with open(relevant_content, 'r') as gamestate_file:
                     all_content = gamestate_file.read()
                     call_function(all_content, save_id)
-    except:
+    except Exception as err:
+        logging.exception(err)
         database_connection.close()
     return database_connection
 
@@ -200,6 +217,9 @@ def get_save_flag(connection: sqlite3.Connection) -> Dict:
     return saves_flag
 
 if __name__ == "__main__":
-    with tempfile.TemporaryDirectory() as temp_dir:
-        connection = get_flag_dict(temp_dir)
-        connection.close()
+    connection = get_flag_dict(".")
+    print(get_save_flag(connection))
+    connection.close()
+    # with tempfile.TemporaryDirectory() as temp_dir:
+    #     connection = get_flag_dict(temp_dir)
+    #     connection.close()
