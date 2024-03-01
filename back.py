@@ -9,12 +9,17 @@ import sqlite3
 from itertools import chain
 from pathlib import Path
 from sqlite3 import Connection, Cursor
-from typing import Iterable, Callable, Dict, Optional
+from typing import Iterable, Callable, Dict, Optional, Tuple, List
 
 from tqdm import tqdm
 import yaml
 
 GAMESTATE = "gamestate"
+
+
+## CONSTANT REQUEST
+
+
 
 
 def combine_multiple_savegames_folder(
@@ -200,26 +205,70 @@ def get_tags_header(connection: sqlite3.Connection) -> Dict:
     return {tag: {"display": tag_dict[tag]["display"], "top_parent": search_parent(tag_dict, tag)}
             for tag in tag_dict if tag_dict[tag]["display"] is not None}
 
-def get_save_flag(connection: sqlite3.Connection) -> Dict:
+def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Connection)->Dict:
     """
-
-    :param connection:
+    TODO
+    :param tags_save_iterable:
     :return:
     """
     cursor = connection.cursor()
-    cursor.execute("SELECT save_id, save_location FROM saves")
-    saves = cursor.fetchall()
     saves_flag = {}
-    for save_id, save_location in saves:
-        cursor.execute("""SELECT tag_id FROM saves_tags WHERE save_id=?""", (save_id,))
+    for save_id, save_location in save_iterable:
+        cursor.execute("""SELECT tags.tag_id FROM saves_tags JOIN tags ON saves_tags.tag_id = tags.tag_id WHERE save_id=? AND tags.display IS NOT NULL""",
+                       (save_id,))
         flags = list(chain(*cursor.fetchall()))
         saves_flag[save_id] = {"location": save_location, "flags": flags}
     return saves_flag
 
+def search_saves_where_tags(connection: sqlite3.Connection, tags: List[str], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
+    """
+
+    :param connection:
+    :param tags:
+    :return:
+    """
+    cursor = connection.cursor()
+    if (text is None) or len(text)==0:
+        sql_query = """
+        SELECT DISTINCT saves.save_id, saves.save_location 
+        FROM saves 
+        JOIN saves_tags on saves.save_id = saves_tags.save_id 
+        JOIN tags ON saves_tags.tag_id = tags.tag_id 
+        WHERE display IN ({})""".format(", ".join(['?' for _ in tags]))
+        cursor.execute(sql_query, tags)
+    else:
+        sql_query = """
+                SELECT DISTINCT saves.save_id, saves.save_location 
+                FROM saves 
+                JOIN saves_tags on saves.save_id = saves_tags.save_id 
+                JOIN tags ON saves_tags.tag_id = tags.tag_id 
+                WHERE display IN ({})
+                AND (display LIKE ? OR saves.save_id LIKE ?)
+                """.format(", ".join(['?' for _ in tags]))
+        vars = tuple([*tags, f"%{text}%", f"%{text}%"])
+        cursor.execute(sql_query, vars)
+    saves = cursor.fetchall()
+    cursor.close()
+    return saves
+
+def search_saves(connection: sqlite3.Connection, text: Optional[str]=None) -> Iterable[Tuple[str, str]]:
+    """
+
+    :param connection:
+    :param text:
+    :return:
+    """
+    cursor = connection.cursor()
+    if (text is None) or len(text)==0:
+        cursor.execute("SELECT save_id, save_location FROM saves")
+    else:
+        cursor.execute("""SELECT DISTINCT saves.save_id, saves.save_location FROM saves JOIN saves_tags on saves.save_id = saves_tags.save_id JOIN tags ON saves_tags.tag_id = tags.tag_id where display LIKE ? OR saves.save_id LIKE ?""", (f"%{text}%", f"%{text}%"))
+    saves = cursor.fetchall()
+    cursor.close()
+    return saves
+
+
 if __name__ == "__main__":
-    connection = get_flag_dict(".")
-    print(get_save_flag(connection))
-    connection.close()
-    # with tempfile.TemporaryDirectory() as temp_dir:
-    #     connection = get_flag_dict(temp_dir)
-    #     connection.close()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        connection = get_flag_dict(temp_dir)
+        connection.close()
