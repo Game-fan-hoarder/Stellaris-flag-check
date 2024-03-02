@@ -248,7 +248,7 @@ def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Conn
         saves_flag[save_id] = {"location": save_location, "flags": flags}
     return saves_flag
 
-def search_saves_where_tags(connection: sqlite3.Connection, tags: Union[Tuple[str], List[str]], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
+def search_saves_where_tags(connection: sqlite3.Connection, tags: Union[Tuple[str,...], List[str]], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
     """
 
     :param connection:

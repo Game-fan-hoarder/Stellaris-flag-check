@@ -3,10 +3,8 @@ Visual part of the project.
 """
 import json
 import sys
-import random
 import tempfile
 import warnings
-from functools import partial
 
 from sqlite3 import Connection
 from typing import Optional, Dict, List, Set
@@ -19,8 +17,8 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QPushButton,
     QLineEdit,
-    QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QTreeWidget,
-    QTreeWidgetItem, QGridLayout
+    QWidget, QHBoxLayout, QVBoxLayout, QTreeWidget,
+    QTreeWidgetItem, QGridLayout, QLabel
 )
 
 from back import get_flag_dict, search_saves, get_flags, \
@@ -206,24 +204,44 @@ class TagFilterWidget(QWidget):
             self.displayed_tag.remove(button.tag_id)
             self.display_changed.emit(self.displayed_tag)
 
+class MultiColorWidget(QWidget):
+    def __init__(self, data_flag, color_map, parent = None):
+        super().__init__(parent)
+        layout = QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setHorizontalSpacing(0)
+        layout.setVerticalSpacing(0)
+        for flag in data_flag:
+            label = QLabel(color_map[flag]["display"])
+            label.setStyleSheet(
+                f"background-color: {color_map[flag]['color']};")
+            layout.addWidget(label) # may change this
+
+        self.setLayout(layout)
+
+
 
 class SaveTableWidget(QTableWidget):
-    def __init__(self, parent: Optional[QWidget] = None, *args,
+    def __init__(self, parent: Optional[QWidget] = None,
+                 color_map: Dict = None,
+                 *args,
                  **kwargs) -> None:
         super().__init__(parent=parent, *args, **kwargs)
 
+        self.color_map = color_map
         self.setColumnCount(2)
-        self.setHorizontalHeaderLabels(["Path", "Tags"])
 
     @Slot(dict)
     def display_save_tag(self,
                          save_tag_dict: Dict[str, Dict[str, str]]) -> None:
         self.clear()
+        self.setHorizontalHeaderLabels(["Path", "Tags"])
         self.setRowCount(len(save_tag_dict))
         for index_, (key, value) in enumerate(save_tag_dict.items()):
             save_path_item = QTableWidgetItem(value["location"])
             self.setItem(index_, 0, save_path_item)
-
+            flags = MultiColorWidget(value["flags"], self.color_map, self)
+            self.setCellWidget(index_, 1, flags)
 
 class MainWindow(QWidget):
     """The main display windows for the appplication."""
@@ -245,7 +263,7 @@ class MainWindow(QWidget):
 
     def _init_filter(self):
         """Initialize the filter requests."""
-        self.tag_filter = set()
+        self.tag_filter: Set[str] = set()
         self.text_filter = None
 
     def update_display(self) -> None:
@@ -255,7 +273,7 @@ class MainWindow(QWidget):
         """
         if len(self.tag_filter) > 0:
             save_iterable = search_saves_where_tags(self.connection,
-                                                    self.tag_filter,
+                                                    tuple(self.tag_filter),
                                                     self.text_filter)
         else:
             save_iterable = search_saves(self.connection, self.text_filter)
@@ -288,7 +306,7 @@ class MainWindow(QWidget):
             self.top_filter_widget.add_button)
 
 
-        self.save_table_widget = SaveTableWidget(self)
+        self.save_table_widget = SaveTableWidget(self, self.color_map)
         self.update_table.connect(self.save_table_widget.display_save_tag)
 
         self.top_banner_widget.filter.connect(self.update_filter)
