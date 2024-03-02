@@ -262,7 +262,10 @@ def search_saves_where_tags(connection: sqlite3.Connection, tags: Iterable[str],
         FROM saves 
         JOIN saves_tags on saves.save_id = saves_tags.save_id 
         JOIN tags ON saves_tags.tag_id = tags.tag_id 
-        WHERE display IN ({})""".format(", ".join(['?' for _ in tags]))
+        WHERE display IN ({})
+        GROUP BY saves.save_id
+        HAVING COUNT(DISTINCT display) = {};
+        """.format(", ".join(['?' for _ in tags]), len(tags))
         cursor.execute(sql_query, tuple(tags))
     else:
         sql_query = """
@@ -294,5 +297,3 @@ def search_saves(connection: sqlite3.Connection, text: Optional[str]=None) -> It
     saves = cursor.fetchall()
     cursor.close()
     return saves
-
-
