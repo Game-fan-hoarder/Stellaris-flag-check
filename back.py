@@ -1,24 +1,22 @@
 import logging
-import zipfile
-import tempfile
 import os
 import platform
-import warnings
 import sqlite3
+import tempfile
+import warnings
+import zipfile
 from itertools import chain
 from pathlib import Path
 from sqlite3 import Connection, Cursor
-from typing import Iterable, Callable, Dict, Optional, Tuple, List, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-from tqdm import tqdm
 import yaml
+from tqdm import tqdm
 
 GAMESTATE = "gamestate"
 
 
 ## CONSTANT REQUEST
-
-
 
 
 def combine_multiple_savegames_folder(
@@ -53,8 +51,9 @@ def get_saves_folder() -> Iterable[Path]:
         target_1 = base.joinpath("Documents/Paradox Interactive/Stellaris/save games")
         target_2 = base.joinpath("Documents/Paradox Interactive/Stellaris Plaza/save games")
 
-        steam_path = str(read_reg(ep = winreg.HKEY_LOCAL_MACHINE, p = r"SOFTWARE\Wow6432Node\Valve\Steam", k = 'InstallPath'))
-        targets_3 = [steam_user_path.joinpath("281990/remote/save games") for steam_user_path in Path(steam_path).joinpath("userdata").glob("*")]
+        steam_path = str(read_reg(ep=winreg.HKEY_LOCAL_MACHINE, p=r"SOFTWARE\Wow6432Node\Valve\Steam", k='InstallPath'))
+        targets_3 = [steam_user_path.joinpath("281990/remote/save games") for steam_user_path in
+                     Path(steam_path).joinpath("userdata").glob("*")]
         return combine_multiple_savegames_folder([target_1, target_2, *targets_3])
     if system == "Darwin":
         # MAC
@@ -137,7 +136,8 @@ def load_flag_map(database_connection: Connection) -> Callable:
                         all_one_flag_dict[parent_tag_id]["found"] = True
         for tag_value in all_one_flag_dict:
             if all_one_flag_dict[tag_value]["found"] is False:
-                cursor.execute("""INSERT INTO saves_tags (tag_id, save_id) VALUES (?,?)""", (all_one_flag_dict[tag_value]["default"], save_id))
+                cursor.execute("""INSERT INTO saves_tags (tag_id, save_id) VALUES (?,?)""",
+                               (all_one_flag_dict[tag_value]["default"], save_id))
         database_connection.commit()
         cursor.close()
 
@@ -181,6 +181,7 @@ def get_flag_dict(dir_to_clean):
         database_connection.close()
     return database_connection
 
+
 def search_parent(tag_dict: Dict, tag_name: str, counter=0):
     """Search the top parent of a tag"""
     if counter >= len(tag_dict):
@@ -188,7 +189,8 @@ def search_parent(tag_dict: Dict, tag_name: str, counter=0):
     if tag_dict[tag_name]["parent_tag"] is None:
         return tag_name
     else:
-        return search_parent(tag_dict, tag_dict[tag_name]["parent_tag"], counter+1)
+        return search_parent(tag_dict, tag_dict[tag_name]["parent_tag"], counter + 1)
+
 
 def get_tags_header(connection: sqlite3.Connection) -> Dict:
     """
@@ -200,11 +202,13 @@ def get_tags_header(connection: sqlite3.Connection) -> Dict:
     cursor.execute("SELECT tag_id, parent_tag_id, display FROM tags")
     tags = cursor.fetchall()
     tag_dict = {tag_id: {"parent_tag": parent_tag_id, "display": display} for tag_id, parent_tag_id, display in tags}
-    return {tag: {"display": tag_dict[tag]["display"] if tag_dict[tag]["display"] is not None else tag.replace("_", " ").title(), "top_parent": search_parent(tag_dict, tag)}
+    return {tag: {
+        "display": tag_dict[tag]["display"] if tag_dict[tag]["display"] is not None else tag.replace("_", " ").title(),
+        "top_parent": search_parent(tag_dict, tag)}
             for tag in tag_dict}
 
 
-def get_tags_dict(connection: sqlite3.Connection, parent = None, depth: int = 0):
+def get_tags_dict(connection: sqlite3.Connection, parent=None, depth: int = 0):
     """Really inefficient way to get the tree but performance is not the main point here."""
     cursor = connection.cursor()
     tag_tree_dict = {}
@@ -217,7 +221,8 @@ def get_tags_dict(connection: sqlite3.Connection, parent = None, depth: int = 0)
         tags = cursor.fetchall()
         cursor.close()
         for tag_id, _, display in tags:
-            tag_tree_dict[tag_id] = {"display": display if display is not None else tag_id.replace("_", " ").title(), "childs": get_tags_dict(connection, tag_id, depth+1)}
+            tag_tree_dict[tag_id] = {"display": display if display is not None else tag_id.replace("_", " ").title(),
+                                     "childs": get_tags_dict(connection, tag_id, depth + 1)}
     else:
         cursor.execute(
             "SELECT tag_id, parent_tag_id, display FROM tags WHERE parent_tag_id = ?", (parent,))
@@ -231,8 +236,7 @@ def get_tags_dict(connection: sqlite3.Connection, parent = None, depth: int = 0)
     return tag_tree_dict
 
 
-
-def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Connection)->Dict:
+def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Connection) -> Dict:
     """
     TODO
     :param tags_save_iterable:
@@ -241,13 +245,16 @@ def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Conn
     cursor = connection.cursor()
     saves_flag = {}
     for save_id, save_location in save_iterable:
-        cursor.execute("""SELECT tags.tag_id FROM saves_tags JOIN tags ON saves_tags.tag_id = tags.tag_id WHERE save_id=? AND tags.display IS NOT NULL""",
-                       (save_id,))
+        cursor.execute(
+            """SELECT tags.tag_id FROM saves_tags JOIN tags ON saves_tags.tag_id = tags.tag_id WHERE save_id=? AND tags.display IS NOT NULL""",
+            (save_id,))
         flags = list(chain(*cursor.fetchall()))
         saves_flag[save_id] = {"location": save_location, "flags": flags}
     return saves_flag
 
-def search_saves_where_tags(connection: sqlite3.Connection, tags: Union[Tuple[str,...], List[str]], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
+
+def search_saves_where_tags(connection: sqlite3.Connection, tags: Union[Tuple[str, ...], List[str]],
+                            text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
     """
 
     :param connection:
@@ -255,7 +262,7 @@ def search_saves_where_tags(connection: sqlite3.Connection, tags: Union[Tuple[st
     :return:
     """
     cursor = connection.cursor()
-    if (text is None) or len(text)==0:
+    if (text is None) or len(text) == 0:
         sql_query = """
         SELECT DISTINCT saves.save_id, saves.save_location 
         FROM saves 
@@ -288,7 +295,8 @@ def search_saves_where_tags(connection: sqlite3.Connection, tags: Union[Tuple[st
     cursor.close()
     return saves
 
-def search_saves(connection: sqlite3.Connection, text: Optional[str]=None) -> Iterable[Tuple[str, str]]:
+
+def search_saves(connection: sqlite3.Connection, text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
     """
 
     :param connection:
@@ -296,10 +304,12 @@ def search_saves(connection: sqlite3.Connection, text: Optional[str]=None) -> It
     :return:
     """
     cursor = connection.cursor()
-    if (text is None) or len(text)==0:
+    if (text is None) or len(text) == 0:
         cursor.execute("SELECT save_id, save_location FROM saves")
     else:
-        cursor.execute("""SELECT DISTINCT saves.save_id, saves.save_location FROM saves JOIN saves_tags on saves.save_id = saves_tags.save_id JOIN tags ON saves_tags.tag_id = tags.tag_id where display LIKE ? OR saves.save_id LIKE ?""", (f"%{text}%", f"%{text}%"))
+        cursor.execute(
+            """SELECT DISTINCT saves.save_id, saves.save_location FROM saves JOIN saves_tags on saves.save_id = saves_tags.save_id JOIN tags ON saves_tags.tag_id = tags.tag_id where display LIKE ? OR saves.save_id LIKE ?""",
+            (f"%{text}%", f"%{text}%"))
     saves = cursor.fetchall()
     cursor.close()
     return saves

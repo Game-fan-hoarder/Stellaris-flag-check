@@ -5,24 +5,18 @@ import json
 import sys
 import tempfile
 import warnings
-
 from sqlite3 import Connection
-from typing import Optional, Dict, List, Set
+from typing import Dict, List, Optional, Set
 
-from PySide6.QtCore import Slot, Signal
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (
-    QApplication,
-    QTableWidget,
-    QTableWidgetItem,
-    QPushButton,
-    QLineEdit,
-    QWidget, QHBoxLayout, QVBoxLayout, QTreeWidget,
-    QTreeWidgetItem, QGridLayout, QLabel
-)
+from PySide6.QtWidgets import (QApplication, QGridLayout, QHBoxLayout, QLabel,
+                               QLineEdit, QPushButton, QTableWidget,
+                               QTableWidgetItem, QTreeWidget, QTreeWidgetItem,
+                               QVBoxLayout, QWidget)
 
-from back import get_flag_dict, search_saves, get_flags, \
-    search_saves_where_tags, get_tags_header, get_tags_dict
+from back import (get_flag_dict, get_flags, get_tags_dict, get_tags_header,
+                  search_saves, search_saves_where_tags)
 
 
 def get_rgb_from_hex(code):
@@ -148,17 +142,14 @@ class TagFilterWidget(QWidget):
         :return:
         """
         for tag_id, tag_subdict in tag_dict.items():
+            button = AutoHideButton(tag_subdict["display"], tag_id, self)
+            button.was_clicked.connect(self.remove_button)
+            button.setStyleSheet(f"background-color: {color_map[tag_id]['color']};")
+            button.hide()
             if len(tag_subdict["childs"]) == 0:
-                self.tag_buttons[tag_id] = AutoHideButton(tag_subdict["display"], tag_id, self)
-                self.tag_buttons[tag_id].was_clicked.connect(self.remove_button)
-                self.tag_buttons[tag_id].setStyleSheet(f"background-color: {color_map[tag_id]['color']};")
-                self.tag_buttons[tag_id].hide()
+                self.tag_buttons[tag_id] = button
             else:
-                self.tag_group_buttons[tag_id] = AutoHideButton(tag_subdict["display"], tag_id, self)
-                self.tag_group_buttons[tag_id].was_clicked.connect(self.remove_button)
-                self.tag_group_buttons[tag_id].setStyleSheet(
-                    f"background-color: {color_map[tag_id]['color']};")
-                self.tag_group_buttons[tag_id].hide()
+                self.tag_group_buttons[tag_id] = button
                 self.update_buttons(tag_subdict["childs"], color_map)
 
     def _init_ui(self) -> None:
@@ -236,7 +227,7 @@ class SaveTableWidget(QTableWidget):
 
         self.color_map = color_map
         self.setColumnCount(2)
-        self.setColumnWidth(0, 5*self.columnWidth(1))
+        self.setColumnWidth(0, 5 * self.columnWidth(1))
         self.displayed_tags = set()
         self._cache = None
 
@@ -250,6 +241,7 @@ class SaveTableWidget(QTableWidget):
                 if widget:
                     widget.deleteLater()
         self.clear()
+
     @Slot(dict)
     def display_save_tag(self,
                          save_tag_dict: Dict[str, Dict[str, str]] = None) -> None:
@@ -276,6 +268,7 @@ class SaveTableWidget(QTableWidget):
             self.setCellWidget(index_, 1, flags)
         self.resizeRowsToContents()
         self._cache = save_tag_dict
+
     @Slot(set)
     def display_update(self, save_tag_set: Set[str]) -> None:
         """
@@ -285,6 +278,7 @@ class SaveTableWidget(QTableWidget):
         """
         self.displayed_tags = save_tag_set
         self.display_save_tag()
+
 
 class MainWindow(QWidget):
     """The main display windows for the application."""

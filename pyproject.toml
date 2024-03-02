@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stellaris-save-check"
+authors = [{ name = "Olivier HO", email = "hozhenwai@gmail.com" }]
+description = "Check the flags from stellaris save games"
+requires-python = ">=3.10"
+license = { text = "MIT Licence" }
+dynamic = ["dependencies", "version", "readme"]
+keywords = ["stellaris", "saves", "flags"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+version = { file = ["VERSION"] }
+readme = { file = "README.md", content-type = "type/markdown" }
+
+[project.urls]
+Source = "https://github.com/Game-fan-hoarder/Stellaris-flag-check"
+Tracker = "https://github.com/Game-fan-hoarder/Stellaris-flag-check/issues"
