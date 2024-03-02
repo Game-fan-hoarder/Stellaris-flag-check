@@ -8,7 +8,7 @@ import sqlite3
 from itertools import chain
 from pathlib import Path
 from sqlite3 import Connection, Cursor
-from typing import Iterable, Callable, Dict, Optional, Tuple
+from typing import Iterable, Callable, Dict, Optional, Tuple, List, Union
 
 from tqdm import tqdm
 import yaml
@@ -248,7 +248,7 @@ def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Conn
         saves_flag[save_id] = {"location": save_location, "flags": flags}
     return saves_flag
 
-def search_saves_where_tags(connection: sqlite3.Connection, tags: Iterable[str], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
+def search_saves_where_tags(connection: sqlite3.Connection, tags: Union[Tuple[str], List[str]], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
     """
 
     :param connection:
@@ -269,13 +269,20 @@ def search_saves_where_tags(connection: sqlite3.Connection, tags: Iterable[str],
         cursor.execute(sql_query, tuple(tags))
     else:
         sql_query = """
-                SELECT DISTINCT saves.save_id, saves.save_location 
+                SELECT DISTINCT saves.save_id, saves.save_location
+                FROM saves JOIN
+                (SELECT DISTINCT saves.save_id, saves.save_location 
                 FROM saves 
                 JOIN saves_tags on saves.save_id = saves_tags.save_id 
                 JOIN tags ON saves_tags.tag_id = tags.tag_id 
                 WHERE display IN ({})
-                AND (display LIKE ? OR saves.save_id LIKE ?)
-                """.format(", ".join(['?' for _ in tags]))
+                GROUP BY saves.save_id
+                HAVING COUNT(DISTINCT display) = {}) AS sec
+                ON saves.save_id = sec.save_id
+                JOIN saves_tags on saves_tags.save_id = saves.save_id
+                JOIN tags ON saves_tags.tag_id = tags.tag_id 
+                WHERE (display LIKE ? OR saves.save_id LIKE ?)
+                """.format(", ".join(['?' for _ in tags]), len(tags))
         vars = tuple([*tags, f"%{text}%", f"%{text}%"])
         cursor.execute(sql_query, vars)
     saves = cursor.fetchall()
