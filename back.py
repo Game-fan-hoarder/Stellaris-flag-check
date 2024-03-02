@@ -120,22 +120,21 @@ def load_flag_map(database_connection: Connection) -> Callable:
         cursor = database_connection.cursor()
         cursor.execute("SELECT * FROM one_of")
         all_one_of_flag = cursor.fetchall()
-        all_one_flag_dict = {}
+        all_one_flag_dict = {flag[0]: {"found": False} for flag in all_one_of_flag}
         cursor.execute("SELECT tags.tag_id, tags.parent_tag_id, tags.target FROM tags")
 
         for tag_id, parent_tag_id, target in cursor.fetchall():
-            if parent_tag_id in all_one_of_flag:
-                if parent_tag_id in all_one_flag_dict:
-                    if all_one_flag_dict[parent_tag_id]["found"] is True:
-                        continue
-                else:
-                    all_one_flag_dict[parent_tag_id]["found"] = False
+            if parent_tag_id in all_one_flag_dict:
+                if all_one_flag_dict[parent_tag_id]["found"] is True:
+                    continue
                 if target is None:
                     all_one_flag_dict[parent_tag_id]["default"] = tag_id
             if target is not None:
                 if save_state_content.find(target) > 0:
                     # found
                     cursor.execute("""INSERT INTO saves_tags (tag_id, save_id) VALUES (?,?)""", (tag_id, save_id))
+                    if parent_tag_id in all_one_flag_dict:
+                        all_one_flag_dict[parent_tag_id]["found"] = True
         for tag_value in all_one_flag_dict:
             if all_one_flag_dict[tag_value]["found"] is False:
                 cursor.execute("""INSERT INTO saves_tags (tag_id, save_id) VALUES (?,?)""", (all_one_flag_dict[tag_value]["default"], save_id))
