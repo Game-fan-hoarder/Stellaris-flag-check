@@ -56,35 +56,35 @@ fallen_empire:
   any_of:
     - materialist:
         target: "fallen_empire_1"
-        display: "materialist"
+        display: "Materialist"
     - spiritualist:
         target: "fallen_empire_2"
-        display: "spiritualist"
+        display: "Spiritualist"
     - xenophile:
         target: "fallen_empire_3"
-        display: "xenophile"
+        display: "Xenophile"
     - xenophoble:
         target: "fallen_empire_4"
-        display: "xenophobe"
+        display: "Xenophobe"
     - machine:
         target: "fallen_empire_machine"
-        display: "machine"
+        display: "Machine"
 # systems
 systems:
   base:
     any_of:
       - trappist:
           target: "trappist_initializer"
-          display: "trappist"
+          display: "Trappist"
       - odryskia:
           target: "site_debris_belt"
-          display: "odryskia"
+          display: "Odryskia"
       - polaris:
           target: "polaris_civilization"
-          display: "polaris"
+          display: "Polaris"
       - parvus:
           target: "parvus_system"
-          display: "parvus"
+          display: "Parvus"
       - zanaam:
           target: "special_init_06"
           display: "Zanaam"
@@ -110,7 +110,7 @@ systems:
           display: "Ratlings"
       - sea_of_consciousness:
           target: "living_planet_system"
-          display: "Sea of consciousness"
+          display: "Sea Of Consciousness"
   first_contact:
     any_of:
       - ithome:

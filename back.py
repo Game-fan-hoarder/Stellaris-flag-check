@@ -1,7 +1,6 @@
 import logging
 import zipfile
 import tempfile
-import shutil
 import os
 import platform
 import warnings
@@ -9,7 +8,7 @@ import sqlite3
 from itertools import chain
 from pathlib import Path
 from sqlite3 import Connection, Cursor
-from typing import Iterable, Callable, Dict, Optional, Tuple, List
+from typing import Iterable, Callable, Dict, Optional, Tuple
 
 from tqdm import tqdm
 import yaml
@@ -202,8 +201,37 @@ def get_tags_header(connection: sqlite3.Connection) -> Dict:
     cursor.execute("SELECT tag_id, parent_tag_id, display FROM tags")
     tags = cursor.fetchall()
     tag_dict = {tag_id: {"parent_tag": parent_tag_id, "display": display} for tag_id, parent_tag_id, display in tags}
-    return {tag: {"display": tag_dict[tag]["display"], "top_parent": search_parent(tag_dict, tag)}
-            for tag in tag_dict if tag_dict[tag]["display"] is not None}
+    return {tag: {"display": tag_dict[tag]["display"] if tag_dict[tag]["display"] is not None else tag.replace("_", " ").title(), "top_parent": search_parent(tag_dict, tag)}
+            for tag in tag_dict}
+
+
+def get_tags_dict(connection: sqlite3.Connection, parent = None, depth: int = 0):
+    """Really inefficient way to get the tree but performance is not the main point here."""
+    cursor = connection.cursor()
+    tag_tree_dict = {}
+
+    if depth > 100:
+        raise Exception("Max depth exceeded, probably a loop with the flags.yaml")
+
+    if (parent is None):
+        cursor.execute("SELECT tag_id, parent_tag_id, display FROM tags WHERE parent_tag_id IS NULL")
+        tags = cursor.fetchall()
+        cursor.close()
+        for tag_id, _, display in tags:
+            tag_tree_dict[tag_id] = {"display": display if display is not None else tag_id.replace("_", " ").title(), "childs": get_tags_dict(connection, tag_id, depth+1)}
+    else:
+        cursor.execute(
+            "SELECT tag_id, parent_tag_id, display FROM tags WHERE parent_tag_id = ?", (parent,))
+        tags = cursor.fetchall()
+        cursor.close()
+        for tag_id, _, display in tags:
+            tag_tree_dict[tag_id] = {
+                "display": display if display is not None else tag_id.replace("_", " ").title(),
+                "childs": get_tags_dict(connection, tag_id, depth + 1)}
+
+    return tag_tree_dict
+
+
 
 def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Connection)->Dict:
     """
@@ -220,7 +248,7 @@ def get_flags(save_iterable: Iterable[Tuple[str, str]], connection: sqlite3.Conn
         saves_flag[save_id] = {"location": save_location, "flags": flags}
     return saves_flag
 
-def search_saves_where_tags(connection: sqlite3.Connection, tags: List[str], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
+def search_saves_where_tags(connection: sqlite3.Connection, tags: Iterable[str], text: Optional[str] = None) -> Iterable[Tuple[str, str]]:
     """
 
     :param connection:
@@ -235,7 +263,7 @@ def search_saves_where_tags(connection: sqlite3.Connection, tags: List[str], tex
         JOIN saves_tags on saves.save_id = saves_tags.save_id 
         JOIN tags ON saves_tags.tag_id = tags.tag_id 
         WHERE display IN ({})""".format(", ".join(['?' for _ in tags]))
-        cursor.execute(sql_query, tags)
+        cursor.execute(sql_query, tuple(tags))
     else:
         sql_query = """
                 SELECT DISTINCT saves.save_id, saves.save_location 
@@ -268,7 +296,3 @@ def search_saves(connection: sqlite3.Connection, text: Optional[str]=None) -> It
     return saves
 
 
-if __name__ == "__main__":
-    with tempfile.TemporaryDirectory() as temp_dir:
-        connection = get_flag_dict(temp_dir)
-        connection.close()
