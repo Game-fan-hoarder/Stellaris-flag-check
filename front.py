@@ -1,5 +1,5 @@
 """
-Visual part of the project.
+Visual part of the project. May have memory leak, since some sub-element are not deleted explicitly set to delete.
 """
 import json
 import sys
@@ -24,14 +24,16 @@ from PySide6.QtWidgets import (
 from back import get_flag_dict, search_saves, get_flags, \
     search_saves_where_tags, get_tags_header, get_tags_dict
 
+
 def get_rgb_from_hex(code):
     code_hex = code.replace("#", "")
-    rgb = tuple(int(code_hex[i:i+2], 16) for i in (0, 2, 4))
+    rgb = tuple(int(code_hex[i:i + 2], 16) for i in (0, 2, 4))
     return QColor.fromRgb(rgb[0], rgb[1], rgb[2])
 
-class AutoHideButton(QPushButton):
 
+class AutoHideButton(QPushButton):
     was_clicked = Signal(QPushButton)
+
     def __init__(self, text, tag_id: str, parent=None):
         super().__init__(text, parent)
         self.clicked.connect(self.on_clicked)
@@ -41,6 +43,7 @@ class AutoHideButton(QPushButton):
     def on_clicked(self):
         self.hide()
         self.was_clicked.emit(self)
+
 
 class LegendWidget(QWidget):
     tag_filter = Signal(str)
@@ -98,6 +101,7 @@ class LegendWidget(QWidget):
         """
         self.tag_filter.emit(item.text(1))
 
+
 class BannerWidget(QWidget):
     filter = Signal(str)
 
@@ -112,6 +116,7 @@ class BannerWidget(QWidget):
     def _init_ui(self) -> None:
         layout = QHBoxLayout(self)
         self.filter_edit = QLineEdit(self)
+        self.filter_edit.setPlaceholderText("Search something...")
         self.filter_edit.textEdited.connect(self.text_filter_changed)
         layout.addWidget(self.filter_edit)
         self.setLayout(layout)
@@ -123,7 +128,6 @@ class BannerWidget(QWidget):
 
 
 class TagFilterWidget(QWidget):
-
     filter_changed = Signal(set)
     display_changed = Signal(set)
 
@@ -140,11 +144,12 @@ class TagFilterWidget(QWidget):
         """
 
         :param tag_dict:
+        :param color_map:
         :return:
         """
         for tag_id, tag_subdict in tag_dict.items():
-            if len(tag_subdict["childs"])==0:
-                self.tag_buttons[tag_id] = AutoHideButton(tag_subdict["display"], tag_id,  self)
+            if len(tag_subdict["childs"]) == 0:
+                self.tag_buttons[tag_id] = AutoHideButton(tag_subdict["display"], tag_id, self)
                 self.tag_buttons[tag_id].was_clicked.connect(self.remove_button)
                 self.tag_buttons[tag_id].setStyleSheet(f"background-color: {color_map[tag_id]['color']};")
                 self.tag_buttons[tag_id].hide()
@@ -161,19 +166,20 @@ class TagFilterWidget(QWidget):
 
         :return:
         """
-        self.top_panel = QWidget()
+        self.top_panel = QWidget(self)
         self.top_panel.setLayout(QGridLayout())
-        self.bottom_panel = QWidget()
+        self.bottom_panel = QWidget(self)
         self.bottom_panel.setLayout(QGridLayout())
         self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("Filtered tag", self))
         self.layout.addWidget(self.top_panel)
+        self.layout.addWidget(QLabel("Displayed tag collection", self))
         self.layout.addWidget(self.bottom_panel)
 
         self.setLayout(self.layout)
 
-
     @Slot(str)
-    def add_button(self, tag_id:str):
+    def add_button(self, tag_id: str):
         if tag_id in self.tag_buttons:
             if self.top_panel.layout().indexOf(self.tag_buttons[tag_id]) == -1:
                 self.top_panel.layout().addWidget(self.tag_buttons[tag_id])
@@ -204,8 +210,9 @@ class TagFilterWidget(QWidget):
             self.displayed_tag.remove(button.tag_id)
             self.display_changed.emit(self.displayed_tag)
 
+
 class MultiColorWidget(QWidget):
-    def __init__(self, data_flag, color_map, parent = None):
+    def __init__(self, data_flag, color_map, parent=None):
         super().__init__(parent)
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -215,10 +222,9 @@ class MultiColorWidget(QWidget):
             label = QLabel(color_map[flag]["display"])
             label.setStyleSheet(
                 f"background-color: {color_map[flag]['color']};")
-            layout.addWidget(label) # may change this
+            layout.addWidget(label)  # may change this
 
         self.setLayout(layout)
-
 
 
 class SaveTableWidget(QTableWidget):
@@ -230,21 +236,58 @@ class SaveTableWidget(QTableWidget):
 
         self.color_map = color_map
         self.setColumnCount(2)
+        self.setColumnWidth(0, 5*self.columnWidth(1))
+        self.displayed_tags = set()
+        self._cache = None
 
+    def clear_table(self):
+        for row in range(self.rowCount()):
+            for col in range(self.columnCount()):
+                item = self.takeItem(row, col)
+                widget = self.cellWidget(row, col)
+                if item:
+                    del item
+                if widget:
+                    widget.deleteLater()
+        self.clear()
     @Slot(dict)
     def display_save_tag(self,
-                         save_tag_dict: Dict[str, Dict[str, str]]) -> None:
-        self.clear()
+                         save_tag_dict: Dict[str, Dict[str, str]] = None) -> None:
+        """
+
+        :param save_tag_dict:
+        :return:
+        """
+        self.clear_table()
         self.setHorizontalHeaderLabels(["Path", "Tags"])
+        if save_tag_dict is None:
+            save_tag_dict = self._cache
         self.setRowCount(len(save_tag_dict))
         for index_, (key, value) in enumerate(save_tag_dict.items()):
             save_path_item = QTableWidgetItem(value["location"])
             self.setItem(index_, 0, save_path_item)
-            flags = MultiColorWidget(value["flags"], self.color_map, self)
+            if len(self.displayed_tags) == 0:
+                flags = MultiColorWidget(value["flags"], self.color_map, self)
+            else:
+                relevant_color = [self.color_map[color]['color'] for color in self.displayed_tags]
+                flags = MultiColorWidget(
+                    [flag for flag in value["flags"] if self.color_map[flag]['color'] in relevant_color],
+                    self.color_map, self)
             self.setCellWidget(index_, 1, flags)
+        self.resizeRowsToContents()
+        self._cache = save_tag_dict
+    @Slot(set)
+    def display_update(self, save_tag_set: Set[str]) -> None:
+        """
+
+        :param save_tag_set:
+        :return:
+        """
+        self.displayed_tags = save_tag_set
+        self.display_save_tag()
 
 class MainWindow(QWidget):
-    """The main display windows for the appplication."""
+    """The main display windows for the application."""
 
     connection: Connection
 
@@ -300,25 +343,27 @@ class MainWindow(QWidget):
         self.top_banner_widget = BannerWidget(self)
         self.legend_widget.update_tree(tag_dict, self.color_map)
 
-        self.top_filter_widget = TagFilterWidget(self)
-        self.top_filter_widget.update_buttons(tag_dict, self.color_map)
+        self.left_filter_widget = TagFilterWidget(self)
+        self.left_filter_widget.update_buttons(tag_dict, self.color_map)
         self.legend_widget.tag_filter.connect(
-            self.top_filter_widget.add_button)
-
+            self.left_filter_widget.add_button)
 
         self.save_table_widget = SaveTableWidget(self, self.color_map)
         self.update_table.connect(self.save_table_widget.display_save_tag)
 
         self.top_banner_widget.filter.connect(self.update_filter)
 
-        self.top_filter_widget.filter_changed.connect(self.update_tag_filter)
-        # self.top_banner_widget.display_filter_changed.connect(self.update_display)
+        self.left_filter_widget.filter_changed.connect(self.update_tag_filter)
+        self.left_filter_widget.display_changed.connect(self.save_table_widget.display_update)
 
         central_layout.addWidget(self.top_banner_widget)
         central_layout.addWidget(self.save_table_widget)
         central_widget.setLayout(central_layout)
 
-        layout.addWidget(self.top_filter_widget)
+        layout.addWidget(self.left_filter_widget)
+        layout.setStretch(0, 1)
+        layout.setStretch(1, 5)
+        layout.setStretch(2, 1)
         self.setLayout(layout)
 
     def _init_color_map(self):
@@ -351,5 +396,6 @@ class MainWindow(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     main_window = MainWindow()
+    main_window.resize(1024, 768)
     main_window.show()
     sys.exit(app.exec())
