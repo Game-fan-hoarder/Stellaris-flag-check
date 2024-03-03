@@ -2,9 +2,11 @@
 Visual part of the project. May have memory leak, since some sub-element are not deleted explicitly set to delete.
 """
 import json
+import os
 import sys
 import tempfile
 import warnings
+from pathlib import Path
 from sqlite3 import Connection
 from typing import Dict, List, Optional, Set
 
@@ -18,6 +20,8 @@ from PySide6.QtWidgets import (QApplication, QGridLayout, QHBoxLayout, QLabel,
 from back import (get_flag_dict, get_flags, get_tags_dict, get_tags_header,
                   search_saves, search_saves_where_tags)
 
+
+BASE_PATH = Path(getattr(sys, "_MEIPASS", os.path.abspath(".")))
 
 def get_rgb_from_hex(code):
     code_hex = code.replace("#", "")
@@ -363,7 +367,7 @@ class MainWindow(QWidget):
     def _init_color_map(self):
         """Need to change this for custom values."""
         tag_header = get_tags_header(self.connection)
-        with open("color.json") as color_config_file:
+        with open(BASE_PATH.joinpath("color.json")) as color_config_file:
             color_map = json.load(color_config_file)
         for tag_name in tag_header:
             tag_header[tag_name]["color"] = color_map.get(tag_header[tag_name]["top_parent"])

@@ -2,7 +2,9 @@ import logging
 import os
 import platform
 import sqlite3
+import sys
 import tempfile
+import time
 import warnings
 import zipfile
 from itertools import chain
@@ -14,7 +16,7 @@ import yaml
 from tqdm import tqdm
 
 GAMESTATE = "gamestate"
-
+BASE_PATH = Path(getattr(sys, "_MEIPASS", os.path.abspath(".")))
 
 ## CONSTANT REQUEST
 
@@ -43,6 +45,7 @@ def get_saves_folder() -> Iterable[Path]:
                     winreg.CloseKey(key)
                 return value[0]
             except Exception as e:
+                time.sleep(5)
                 return None
             return None
 
@@ -100,7 +103,7 @@ def load_flag_map(database_connection: Connection) -> Callable:
     Maybe next time, we will try to generate the flags.yaml instead of manually
     checking the flags but it too much work.
     """
-    with open("flags.yaml", "r") as file:
+    with open(BASE_PATH.joinpath("flags.yaml"), "r") as file:
         flag_map = yaml.safe_load(file)
 
     cursor = database_connection.cursor()
@@ -147,7 +150,8 @@ def load_flag_map(database_connection: Connection) -> Callable:
 def init_database(database_dir):
     """Create a new database into a temp directory for searching."""
     connection = sqlite3.connect(Path(database_dir).joinpath("flags.db"))
-    with open("database/init_script.sql", 'r') as migration_script:
+
+    with open(BASE_PATH.joinpath("database/init_script.sql"), 'r') as migration_script:
         cursor = connection.cursor()
         cursor.executescript(migration_script.read())
         connection.commit()
@@ -178,6 +182,7 @@ def get_flag_dict(dir_to_clean):
                     call_function(all_content, save_id)
     except Exception as err:
         logging.exception(err)
+        time.sleep(5)
         database_connection.close()
     return database_connection
 
