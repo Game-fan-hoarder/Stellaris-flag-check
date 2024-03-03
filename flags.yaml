@@ -73,6 +73,9 @@ fallen_empire:
 systems:
   base:
     any_of:
+      - earth:
+          target: "pre_ftl_init_sol"
+          display: "Earth"
       - trappist:
           target: "trappist_initializer"
           display: "Trappist"
