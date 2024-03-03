@@ -116,6 +116,9 @@ systems:
       - ithome:
           target: "the_chosen_gate_initializer"
           display: "The Chosen"
+      - solarpunk:
+          target: "solarpunk_01"
+          display: "Helito"
   ancient_relic:
     any_of:
       - care:
