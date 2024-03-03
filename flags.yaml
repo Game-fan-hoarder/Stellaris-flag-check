@@ -1,3 +1,8 @@
+anomalies:
+  any_of:
+    - brain_slug:
+        target: "DISTAR_BRAINSLUG_CAT"
+        display: "BrainSlug"
 legendary_leader:
   target: "legendary_crash_site"
   display: "Keides"
