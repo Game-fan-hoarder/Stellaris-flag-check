@@ -15,9 +15,9 @@ In bonus, there is 'nice' front app to let you filter multiple condition at once
   - ```git clone https://github.com/Game-fan-hoarder/Stellaris-flag-check```
   - ```cd Stellaris-flag-check```
   - ```python -m venv .venv```
-  - ```venv\Scripts\activate``` on windows or ```source venv/bin/activate``` or linux/macOs
+  - ```.venv\Scripts\activate``` on windows or ```source venv/bin/activate``` or linux/macOs
   - ```pip install -r requirements.txt```
-  - ```python frontend.py```
+  - ```python front.py```
 
 ## Customization
 To customize this script, you will have to edit the flags.yaml
