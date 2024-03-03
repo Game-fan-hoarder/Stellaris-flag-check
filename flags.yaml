@@ -75,7 +75,10 @@ systems:
     any_of:
       - earth:
           target: "pre_ftl_init_sol"
-          display: "Earth"
+          display: "Earth (any)"
+      - earth2:
+          target: "humans_machine_age"
+          display: "Earth WWII (machine age)"
       - trappist:
           target: "trappist_initializer"
           display: "Trappist"
