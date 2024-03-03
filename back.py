@@ -27,8 +27,8 @@ def combine_multiple_savegames_folder(
     to check for each location to not miss any of them.
     """
     for candidate_path in savegames_folder_iterable:
-        # assume the user did not add custom files and folder there
-        yield from candidate_path.glob("*")
+        # only save directories
+        yield from filter(os.path.isdir, candidate_path.glob("*"))
 
 
 def get_saves_folder() -> Iterable[Path]:
