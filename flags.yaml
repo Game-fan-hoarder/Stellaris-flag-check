@@ -1,3 +1,8 @@
+anomalies:
+  any_of:
+    - brain_slug:
+        target: "DISTAR_BRAINSLUG_CAT"
+        display: "BrainSlug"
 legendary_leader:
   target: "legendary_crash_site"
   display: "Keides"
@@ -73,6 +78,12 @@ fallen_empire:
 systems:
   base:
     any_of:
+      - earth:
+          target: "pre_ftl_init_sol"
+          display: "Earth (any)"
+      - earth2:
+          target: "humans_machine_age"
+          display: "Earth WWII (machine age)"
       - trappist:
           target: "trappist_initializer"
           display: "Trappist"
@@ -116,6 +127,9 @@ systems:
       - ithome:
           target: "the_chosen_gate_initializer"
           display: "The Chosen"
+      - solarpunk:
+          target: "solarpunk_01"
+          display: "Helito"
   ancient_relic:
     any_of:
       - care:
